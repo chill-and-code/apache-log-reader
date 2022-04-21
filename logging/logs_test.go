@@ -13,21 +13,19 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type readerSuite struct {
+type logsSuite struct {
 	suite.Suite
-	nowFunc func() time.Time
+	testTime time.Time
 }
 
-func (s *readerSuite) SetupSuite() {
+func (s *logsSuite) SetupSuite() {
 	s.Require().NoError(os.RemoveAll(path.Dir(testDataDir)))
 	s.Require().NoError(os.MkdirAll(testDataDir, 0777))
 
 	// generate some logs and log files
 	t, err := time.Parse(dateTimeFormat, "03/Mar/2022:02:45:00 +0000")
 	s.Require().NoError(err)
-	s.nowFunc = func() time.Time {
-		return t
-	}
+	s.testTime = t
 	now := t.Add(-time.Minute)
 	numOfFiles := 3
 	numOfLogs := 3
@@ -48,12 +46,12 @@ func (s *readerSuite) SetupSuite() {
 	}
 }
 
-func (s *readerSuite) TearDownSuite() {
+func (s *logsSuite) TearDownSuite() {
 	s.Require().NoError(os.RemoveAll(path.Dir(testDataDir)))
 }
 
-func (s *readerSuite) Test_NewReader_Success() {
-	dir := "test/new-reader"
+func (s *logsSuite) Test_NewLogs_Success() {
+	dir := "test/logs"
 	s.Require().NoError(os.MkdirAll(dir, 0777))
 	defer func() {
 		s.Require().NoError(os.RemoveAll(dir))
@@ -61,31 +59,31 @@ func (s *readerSuite) Test_NewReader_Success() {
 	for i := 0; i < 5; i++ {
 		s.createLogFile(dir, fmt.Sprintf("http-%d.log", i+1), fmt.Sprintf("log %d", i+1))
 	}
-	cfg := ReaderConfig{
+	cfg := LogsConfig{
 		Directory:    dir,
 		LastNMinutes: 3,
 	}
 
-	reader, err := NewReader(cfg)
+	logs, err := NewLogs(cfg)
 
 	s.NoError(err)
-	s.NotNil(reader)
-	s.Equal(cfg, reader.cfg)
-	s.Len(reader.filesInfo, 5)
+	s.NotNil(logs)
+	s.Equal(cfg, logs.cfg)
+	s.Len(logs.filesInfo, 5)
 }
 
-func (s *readerSuite) Test_NewReader_Error() {
-	cfg := ReaderConfig{
+func (s *logsSuite) Test_NewLogs_Error() {
+	cfg := LogsConfig{
 		Directory: "/path/to/nothing",
 	}
 
-	reader, err := NewReader(cfg)
+	logs, err := NewLogs(cfg)
 
 	s.EqualError(err, "open /path/to/nothing: no such file or directory")
-	s.Nil(reader)
+	s.Nil(logs)
 }
 
-func (s *readerSuite) Test_Read_Success() {
+func (s *logsSuite) Test_Print_Success() {
 	tests := []struct {
 		name         string
 		lastNMinutes int
@@ -159,15 +157,17 @@ func (s *readerSuite) Test_Read_Success() {
 		s.Run(test.name, func() {
 			ctx := context.Background()
 			buf := &bytes.Buffer{}
-			cfg := ReaderConfig{
+			cfg := LogsConfig{
 				Directory:    testDataDir,
 				LastNMinutes: test.lastNMinutes,
 			}
-			reader, err := NewReader(cfg)
-			reader.nowFunc = s.nowFunc
+			logs, err := NewLogs(cfg)
+			logs.nowMinusT = func() time.Time {
+				return s.testTime.Add(-time.Duration(cfg.LastNMinutes) * time.Minute)
+			}
 			s.Require().NoError(err)
 
-			err = reader.Read(ctx, buf)
+			err = logs.Print(ctx, buf)
 
 			s.NoError(err)
 			s.Equal(test.expectedLogs, buf.String())
@@ -186,28 +186,30 @@ func (f fakeFile) ModTime() time.Time { return time.Now() }
 func (f fakeFile) IsDir() bool        { return false }
 func (f fakeFile) Sys() interface{}   { return nil }
 
-func (s *readerSuite) Test_Read_OpenError() {
+func (s *logsSuite) Test_Print_OpenError() {
 	ctx := context.Background()
 	buf := &bytes.Buffer{}
-	cfg := ReaderConfig{
+	cfg := LogsConfig{
 		Directory: "/path/to/nothing",
 	}
 
-	reader := &Reader{
-		nowFunc: s.nowFunc,
-		cfg:     cfg,
+	logs := &Logs{
+		nowMinusT: func() time.Time {
+			return s.testTime
+		},
+		cfg: cfg,
 		filesInfo: []os.FileInfo{
 			fakeFile{name: "does-not-exist"},
 		},
 	}
 
-	err := reader.Read(ctx, buf)
+	err := logs.Print(ctx, buf)
 
 	s.EqualError(err, "open /path/to/nothing/does-not-exist: no such file or directory")
 	s.Equal("", buf.String())
 }
 
-func (s *readerSuite) Test_Read_IndexTimeError() {
+func (s *logsSuite) Test_Print_IndexTimeError() {
 	dir := "test/index-time"
 	s.Require().NoError(os.MkdirAll(dir, 0777))
 	defer func() {
@@ -216,20 +218,22 @@ func (s *readerSuite) Test_Read_IndexTimeError() {
 	s.createLogFile(dir, "bad.log", "some invalid log")
 	ctx := context.Background()
 	buf := &bytes.Buffer{}
-	cfg := ReaderConfig{
+	cfg := LogsConfig{
 		Directory: dir,
 	}
-	reader, err := NewReader(cfg)
-	reader.nowFunc = s.nowFunc
+	logs, err := NewLogs(cfg)
+	logs.nowMinusT = func() time.Time {
+		return s.testTime
+	}
 	s.Require().NoError(err)
 
-	err = reader.Read(ctx, buf)
+	err = logs.Print(ctx, buf)
 
 	s.EqualError(err, "line 'some invalid log': invalid log format")
 	s.Equal("", buf.String())
 }
 
-func (s *readerSuite) createLogFile(dir, name, logs string) *os.File {
+func (s *logsSuite) createLogFile(dir, name, logs string) *os.File {
 	file, err := os.Create(path.Join(dir, name))
 	s.Require().NoError(err)
 	_, err = file.WriteString(logs)
@@ -237,10 +241,6 @@ func (s *readerSuite) createLogFile(dir, name, logs string) *os.File {
 	return file
 }
 
-func TestLogReader(t *testing.T) {
-	suite.Run(t, new(readerSuite))
-}
-
-func BenchmarkLogReader(b *testing.B) {
-	b.ReportAllocs()
+func TestLogs(t *testing.T) {
+	suite.Run(t, new(logsSuite))
 }

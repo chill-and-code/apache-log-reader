@@ -6,7 +6,7 @@ build:
 
 test:
 	@echo "running all tests"
-	go test -v ./...
+	go test -count=1 -v ./...
 
 bench:
 	@echo "running all benchmarks"
