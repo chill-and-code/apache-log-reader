@@ -20,6 +20,7 @@ make build
 # run: "make build" first
 # only run once to generate the test data, it may take a while (~5m)
 ./bin/log-generator
+./bin/log-generator -dir <path/to/generated/logs>
 # run the log-reader with the specified cli arguments
 ./bin/log-reader -d <path/to/log/files> -t <last_n_minutes>
 # run the program directory without generating any binary
@@ -39,8 +40,16 @@ go run cmd/log-generator/main.go -max-files=5 -max-lines=5 -min-lines=5
 ```shell
 # runs all the tests present in test files
 make test
-# generate testdata for the benchmark first
-go run cmd/log-generator/main.go -dir logging/bench
+# generate the benchmark data
+make benchdata
 # runs all the benchmarks present in test files
 make bench
+```
+
+## Benchmarks
+
+`M1 Max`
+
+```text
+BenchmarkIndexTime-10               3312            361886 ns/op           84202 B/op        145 allocs/op
 ```

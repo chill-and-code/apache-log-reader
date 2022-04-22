@@ -11,3 +11,7 @@ test:
 bench:
 	@echo "running all benchmarks"
 	go test -bench . ./...
+
+benchdata:
+	@echo "generating benchmark data"
+	go run cmd/log-generator/main.go -dir logging/bench

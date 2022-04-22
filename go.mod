@@ -1,4 +1,4 @@
-module github.com/steevehook/weblog-analytics
+module github.com/steevehook/apache-log-reader
 
 go 1.17
 

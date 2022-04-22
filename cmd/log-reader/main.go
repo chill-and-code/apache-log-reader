@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/steevehook/weblog-analytics/logging"
+	"github.com/steevehook/apache-log-reader/logging"
 )
 
 func main() {

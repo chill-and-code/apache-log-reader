@@ -272,7 +272,7 @@ func TestLogFile(t *testing.T) {
 
 // Generate the big log file to be able to benchmark properly
 // and make sure to store it inside benchDataDir
-func BenchmarkSearch(b *testing.B) {
+func BenchmarkIndexTime(b *testing.B) {
 	// log-generator stores the big data in http-1.log
 	f, err := os.Open(path.Join(benchDataDir, "http-1.log"))
 	defer func() { require.NoError(b, f.Close()) }()
