@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -76,7 +75,7 @@ func (file File) IndexTime(lookupTime time.Time) (int64, error) {
 			return -1, err
 		}
 		// reposition the middle to the beginning of the current line
-		offset, err = file.seekLine(0, io.SeekCurrent)
+		offset, err = file.seekLine()
 		if err != nil {
 			return -1, err
 		}
@@ -138,74 +137,37 @@ func (file File) IndexTime(lookupTime time.Time) (int64, error) {
 	return -1, nil
 }
 
-// seekLine resets the cursor for N lines relative to whence, back to the beginning (seek back)
-// lines: 0 ->  means seek back (till new line) for the current line
-// lines > 0 -> means seek back that many lines
-func (file File) seekLine(lines int64, whence int) (int64, error) {
-	const bufferSize = 32 * 1024 // 32KB
-	buf := make([]byte, bufferSize)
-	bufLen := 0
-	lines = int64(math.Abs(float64(lines)))
-	seekBack := lines < 1
-	lineCount := int64(0)
-
-	// seekBack ignores the first match lines == 0
-	// then goes to the beginning of the current line
-	if seekBack {
-		lineCount = -1
+//seekLine sets back the file cursor to the beginning of the closest line
+func (file File) seekLine() (int64, error) {
+	// check if we're already at the beginning of the file (offset 0)
+	offset, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return -1, err
+	}
+	if offset == 0 {
+		return file.Seek(0, io.SeekStart)
 	}
 
-	pos, err := file.Seek(0, whence)
-	left := pos
-	offset := int64(bufferSize * -1)
-	for b := 1; ; b++ {
-		if seekBack {
-			// on seekBack 2nd buffer onward needs to seek
-			// past what was just read plus another buffer size
-			if b == 2 {
-				offset *= 2
-			}
-
-			// if next seekBack will pass beginning of file
-			// buffer is 0 to unread position
-			if pos+offset <= 0 {
-				buf = make([]byte, left)
-				left = 0
-				pos, err = file.Seek(0, io.SeekStart)
-			} else {
-				left = left - bufferSize
-				pos, err = file.Seek(offset, io.SeekCurrent)
-			}
-		}
+	for {
+		offset, err = file.Seek(-1, io.SeekCurrent)
 		if err != nil {
-			break
+			return -1, err
 		}
 
-		bufLen, err = file.Read(buf)
+		buf := make([]byte, 1)
+		_, err = file.ReadAt(buf, offset)
 		if err != nil {
-			return file.Seek(0, io.SeekEnd)
+			return -1, err
 		}
-		for i := 0; i < bufLen; i++ {
-			idx := i
-			if seekBack {
-				idx = bufLen - i - 1
-			}
-			if buf[idx] == '\n' {
-				lineCount++
-			}
-			if lineCount == lines {
-				if seekBack {
-					return file.Seek(int64(i)*-1, io.SeekCurrent)
-				}
-				return file.Seek(int64(bufLen*-1+i+1), io.SeekCurrent)
-			}
-		}
-		if seekBack && left == 0 {
+
+		if offset == 0 {
 			return file.Seek(0, io.SeekStart)
 		}
-	}
 
-	return pos, err
+		if buf[0] == '\n' {
+			return file.Seek(1, io.SeekCurrent)
+		}
+	}
 }
 
 // parseLogTime parses a given Apache Common Log line and attempts to convert it into time.Time

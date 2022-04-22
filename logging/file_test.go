@@ -142,57 +142,50 @@ func (s *fileSuite) Test_seekLine() {
 	f := s.createLogs(data)
 	defer func() { s.Require().NoError(f.Close()) }()
 
-	_, err := f.Seek(8, io.SeekStart)
-	s.NoError(err)
-	file := NewFile(f)
-	s.NotNil(file)
-
 	tests := []struct {
 		name           string
-		lines          int64
-		whence         int
+		currentOffset  int64
 		expectedOffset int64
 	}{
 		{
-			name:           "Line Zero CurrentLine",
-			lines:          0,
-			whence:         io.SeekCurrent,
+			name:           "Beginning of the file",
+			currentOffset:  0,
+			expectedOffset: 0,
+		},
+		{
+			name:           "First Line",
+			currentOffset:  3,
+			expectedOffset: 0,
+		},
+		{
+			name:           "Second Line",
+			currentOffset:  7,
 			expectedOffset: 5,
 		},
 		{
-			name:           "LinesGreaterThanZero SeekCurrent",
-			lines:          3,
-			whence:         io.SeekCurrent,
-			expectedOffset: int64(len(data)),
-		},
-		{
-			name:           "LinesGreaterThanZero SeekEnd",
-			lines:          3,
-			whence:         io.SeekEnd,
-			expectedOffset: int64(len(data)),
-		},
-		{
-			name:           "LinesGreaterThanZero SeekStart LastLine",
-			lines:          3,
-			whence:         io.SeekStart,
-			expectedOffset: int64(len(data)),
-		},
-		{
-			name:           "LineGreaterThanZero SeekStart SecondLine",
-			lines:          2,
-			whence:         io.SeekStart,
+			name:           "Third Line",
+			currentOffset:  14,
 			expectedOffset: 10,
 		},
 		{
-			name:           "NegativeLines SeekStart SecondLine",
-			lines:          -2,
-			whence:         io.SeekStart,
-			expectedOffset: 10,
+			name:           "New Line",
+			currentOffset:  5,
+			expectedOffset: 5,
+		},
+		{
+			name:           "End of the file",
+			currentOffset:  17,
+			expectedOffset: 17,
 		},
 	}
 	for _, test := range tests {
 		s.Run(test.name, func() {
-			offset, err := file.seekLine(test.lines, test.whence)
+			_, err := f.Seek(test.currentOffset, io.SeekStart)
+			s.NoError(err)
+			file := NewFile(f)
+			s.NotNil(file)
+
+			offset, err := file.seekLine()
 
 			s.NoError(err)
 			s.Equal(test.expectedOffset, offset)
