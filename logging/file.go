@@ -2,7 +2,6 @@ package logging
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -13,34 +12,44 @@ import (
 )
 
 const (
+	ipGroupName       = "ip"
+	idGroupName       = "id"
+	userGroupName     = "user"
 	dateTimeGroupName = "datetime"
+	requestGroupName  = "request"
+	statusGroupName   = "status"
+	sizeGroupName     = "size"
 	dateTimeFormat    = "02/Jan/2006:15:04:05 -0700"
 )
 
-var errInvalidLogFormat = errors.New("invalid log format")
-
-// NewFile wraps an os.File creating a special apache common log format regex
-// and adding useful helper functions such as seekLine and search for easier working with log files
+// NewFile wraps an os.File, creating a special apache common log format regex
+// adding useful seek & search helper functions to easier work with log files.
+// Here's an example of Apache Common Log format:
+// 127.0.0.1 user-identifier frank [04/Mar/2022:05:30:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
 func NewFile(file *os.File) File {
-	logFormat := fmt.Sprintf(
-		`^(\S+) (\S+) (\S+) \[(?P<%s>[\w:/]+\s[+\-]\d{4})\] "(\S+)\s?(\S+)?\s?(\S+)?" (\d{3}|-) (\d+|-)\s?"?([^"]*)"?\s?"?([^"]*)?"?$`,
-		dateTimeGroupName,
-	)
+	ip := fmt.Sprintf(`(?P<%s>\S+)`, ipGroupName)
+	id := fmt.Sprintf(`(?P<%s>\S+)`, idGroupName)
+	user := fmt.Sprintf(`(?P<%s>\S+)`, userGroupName)
+	datetime := fmt.Sprintf(`\[(?P<%s>[\w:/]+\s[+\-]\d{4})\]`, dateTimeGroupName)
+	request := fmt.Sprintf(`"(?P<%s>\S+)\s?(\S+)?\s?(\S+)?"`, requestGroupName)
+	status := fmt.Sprintf(`(?P<%s>\d{3}|-)`, statusGroupName)
+	size := fmt.Sprintf(`(?P<%s>\d+|-)`, sizeGroupName)
+	logFormat := fmt.Sprintf(`^%s %s %s %s %s %s %s$`, ip, id, user, datetime, request, status, size)
 	return File{
 		File:  file,
 		regEx: regexp.MustCompile(logFormat),
 	}
 }
 
-// File represents a wrapped structure around os.File
+// File represents a wrapped structure around the os.File type
 // providing additional constructs and helpers for working with log files
 type File struct {
 	*os.File
 	regEx *regexp.Regexp
 }
 
-// IndexTime applies a binary search on a log file looking for
-// the offset of the log that is withing lookup time (that took place within the last T time).
+// IndexTime applies a binary search on a log file using Apache Common Log format, looking for
+// the offset of the log that is within the lookup time (that took place within the last T time).
 // offset >= 0 -> means an actual log line to begin reading logs at was found
 // offset == -1 -> all the logs inside the log file are older than the lookup time T
 func (file File) IndexTime(lookupTime time.Time) (int64, error) {
@@ -199,13 +208,13 @@ func (file File) seekLine(lines int64, whence int) (int64, error) {
 	return pos, err
 }
 
-// parseLogTime parses a given apache common log line and attempts to convert it into time.Time
-// example of apache common log line:
+// parseLogTime parses a given Apache Common Log line and attempts to convert it into time.Time
+// Here's an example of Apache Common Log format:
 // 127.0.0.1 user-identifier frank [04/Mar/2022:05:30:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-func (file File) parseLogTime(l string) (time.Time, error) {
-	matches := file.regEx.FindStringSubmatch(l)
+func (file File) parseLogTime(logLine string) (time.Time, error) {
+	matches := file.regEx.FindStringSubmatch(logLine)
 	if len(matches) == 0 {
-		return time.Time{}, fmt.Errorf("line '%s': %w", l, errInvalidLogFormat)
+		return time.Time{}, fmt.Errorf("invalid log format on line '%s'", logLine)
 	}
 
 	var dateTime string
@@ -216,7 +225,7 @@ func (file File) parseLogTime(l string) (time.Time, error) {
 		}
 	}
 	if dateTime == "" {
-		return time.Time{}, fmt.Errorf("invalid date: %w", errInvalidLogFormat)
+		return time.Time{}, fmt.Errorf("invalid date format on line '%s'", logLine)
 	}
 
 	t, err := time.Parse(dateTimeFormat, dateTime)

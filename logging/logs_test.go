@@ -225,7 +225,7 @@ func (s *logsSuite) Test_Print_IndexTimeError() {
 
 	err = logs.Print(buf)
 
-	s.EqualError(err, "line 'some invalid log': invalid log format")
+	s.EqualError(err, "invalid log format on line 'some invalid log'")
 	s.Equal("", buf.String())
 }
 

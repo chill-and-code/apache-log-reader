@@ -133,7 +133,7 @@ func (s *fileSuite) Test_IndexTime_Error() {
 	lookupTime := time.Now().UTC().Add(-1 * time.Minute)
 	offset, err := file.IndexTime(lookupTime)
 
-	s.EqualError(err, "line 'some invalid log line': invalid log format")
+	s.EqualError(err, "invalid log format on line 'some invalid log line'")
 	s.Equal(int64(-1), offset)
 }
 
@@ -224,12 +224,12 @@ func (s *fileSuite) Test_parseLogTime_Error() {
 		{
 			name:        "Empty LogLine",
 			log:         "",
-			expectedErr: "line '': invalid log format",
+			expectedErr: "invalid log format on line ''",
 		},
 		{
 			name:        "Invalid LogLine",
 			log:         "this log line is not valid",
-			expectedErr: "line 'this log line is not valid': invalid log format",
+			expectedErr: "invalid log format on line 'this log line is not valid'",
 		},
 		{
 			name:        "Invalid DateFormat",

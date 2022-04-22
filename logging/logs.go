@@ -2,7 +2,6 @@ package logging
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -76,7 +75,7 @@ func (logs *Logs) Print(w io.Writer) error {
 	}
 
 	if offset >= 0 {
-		err = logs.streamFile(file, offset, w)
+		_, err = logs.streamFile(file, offset, w)
 		if err != nil {
 			return err
 		}
@@ -117,7 +116,7 @@ func (logs *Logs) streamFiles(files []os.FileInfo, w io.Writer) error {
 			return err
 		}
 
-		if err := logs.streamFile(file, 0, w); err != nil {
+		if _, err := logs.streamFile(file, -1, w); err != nil {
 			return err
 		}
 	}
@@ -126,22 +125,15 @@ func (logs *Logs) streamFiles(files []os.FileInfo, w io.Writer) error {
 }
 
 // stream outputs the contents of a file with a given seek offset to a given writer.
-func (logs *Logs) streamFile(file *os.File, offset int64, w io.Writer) error {
-	defer func() {
-		_ = file.Close()
-	}()
-	_, err := file.Seek(offset, io.SeekStart)
-	if err != nil {
-		return err
-	}
+func (logs *Logs) streamFile(file *os.File, offset int64, w io.Writer) (int64, error) {
+	defer func() { _ = file.Close() }()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		_, err := fmt.Fprintln(w, scanner.Text())
+	if offset >= 0 {
+		_, err := file.Seek(offset, io.SeekStart)
 		if err != nil {
-			return err
+			return 0, err
 		}
 	}
 
-	return nil
+	return bufio.NewReader(file).WriteTo(w)
 }
