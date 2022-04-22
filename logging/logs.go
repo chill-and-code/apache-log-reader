@@ -2,7 +2,6 @@ package logging
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,7 +11,7 @@ import (
 	"time"
 )
 
-// LogsConfig represents the configuration to start the log readelogs.
+// LogsConfig represents the configuration Logs.
 type LogsConfig struct {
 	Directory    string
 	LastNMinutes int
@@ -59,37 +58,14 @@ type Logs struct {
 }
 
 // Print reads the log files using the given Logs configuration
-// and streams it to a given writer.
-func (logs *Logs) Print(ctx context.Context, w io.Writer) error {
-	select {
-	case <-ctx.Done():
-		return nil
-	default:
-		return logs.write(w)
-	}
-}
-
-func (logs *Logs) logFileIndex() int {
-	logFileIndex := -1
-	for i, fi := range logs.filesInfo {
-		if logs.nowMinusT().Sub(fi.ModTime()) <= 0 {
-			logFileIndex = i
-			break
-		}
-	}
-
-	return logFileIndex
-}
-
-func (logs *Logs) write(w io.Writer) error {
-	idx := logs.logFileIndex()
+// and streams them to a given writer.
+func (logs *Logs) Print(w io.Writer) error {
+	idx := logs.index()
 	if idx == -1 {
 		return nil
 	}
 
-	filePath := path.Join(logs.cfg.Directory, logs.filesInfo[idx].Name())
-	file, err := os.Open(filePath)
-	defer func() { _ = file.Close() }()
+	file, err := os.Open(path.Join(logs.cfg.Directory, logs.filesInfo[idx].Name()))
 	if err != nil {
 		return err
 	}
@@ -99,54 +75,72 @@ func (logs *Logs) write(w io.Writer) error {
 		return err
 	}
 
-	others := logs.filesInfo[idx+1 : len(logs.filesInfo)]
-	if offset < 0 {
-		if idx+1 >= len(logs.filesInfo) {
-			return nil
-		}
-
-		fi := logs.filesInfo[idx+1]
-		if logs.nowMinusT().Sub(fi.ModTime()) > 0 {
-			return nil
-		}
-		return logs.stream(others, w)
-	}
-
-	_, err = file.Seek(offset, io.SeekStart)
-	if err != nil {
-		return err
-	}
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		_, err := fmt.Fprintln(w, scanner.Text())
+	if offset >= 0 {
+		err = logs.streamFile(file, offset, w)
 		if err != nil {
 			return err
 		}
 	}
 
-	return logs.stream(others, w)
+	// means we're reading the last file which has no fresh logs
+	// so there are no other files left to stream => return.
+	if idx+1 >= len(logs.filesInfo) || logs.nowMinusT().Sub(logs.filesInfo[idx+1].ModTime()) > 0 {
+		return nil
+	}
+
+	rest := logs.filesInfo[idx+1 : len(logs.filesInfo)]
+	return logs.streamFiles(rest, w)
 }
 
-// stream reads from a given list of files and writes to a given writer.
+// index returns the index (offset) of the first file that contains logs
+// that have happened within the last N minutes or -1 if no file contains any fresh logs.
+func (logs *Logs) index() int {
+	idx := -1
+	for i, fi := range logs.filesInfo {
+		if logs.nowMinusT().Sub(fi.ModTime()) <= 0 {
+			idx = i
+			break
+		}
+	}
+
+	return idx
+}
+
+// streamFiles reads from a given list of files and writes to a given writer using a given seek offset.
 // Because we need to preserve the order of the logs, and we want to also immediately stream to
 // a given writer, we cannot use go routines. In a different scenario where order is not important
 // that can of course be very useful.
-func (logs *Logs) stream(files []os.FileInfo, w io.Writer) error {
+func (logs *Logs) streamFiles(files []os.FileInfo, w io.Writer) error {
 	for _, fi := range files {
 		file, err := os.Open(path.Join(logs.cfg.Directory, fi.Name()))
 		if err != nil {
 			return err
 		}
 
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			_, err := fmt.Fprintln(w, scanner.Text())
-			if err != nil {
-				return err
-			}
+		if err := logs.streamFile(file, 0, w); err != nil {
+			return err
 		}
+	}
 
+	return nil
+}
+
+// stream outputs the contents of a file with a given seek offset to a given writer.
+func (logs *Logs) streamFile(file *os.File, offset int64, w io.Writer) error {
+	defer func() {
 		_ = file.Close()
+	}()
+	_, err := file.Seek(offset, io.SeekStart)
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		_, err := fmt.Fprintln(w, scanner.Text())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

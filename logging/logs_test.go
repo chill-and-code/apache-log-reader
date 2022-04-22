@@ -2,7 +2,6 @@ package logging
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -155,7 +154,6 @@ func (s *logsSuite) Test_Print_Success() {
 	}
 	for _, test := range tests {
 		s.Run(test.name, func() {
-			ctx := context.Background()
 			buf := &bytes.Buffer{}
 			cfg := LogsConfig{
 				Directory:    testDataDir,
@@ -167,7 +165,7 @@ func (s *logsSuite) Test_Print_Success() {
 			}
 			s.Require().NoError(err)
 
-			err = logs.Print(ctx, buf)
+			err = logs.Print(buf)
 
 			s.NoError(err)
 			s.Equal(test.expectedLogs, buf.String())
@@ -187,7 +185,6 @@ func (f fakeFile) IsDir() bool        { return false }
 func (f fakeFile) Sys() interface{}   { return nil }
 
 func (s *logsSuite) Test_Print_OpenError() {
-	ctx := context.Background()
 	buf := &bytes.Buffer{}
 	cfg := LogsConfig{
 		Directory: "/path/to/nothing",
@@ -203,7 +200,7 @@ func (s *logsSuite) Test_Print_OpenError() {
 		},
 	}
 
-	err := logs.Print(ctx, buf)
+	err := logs.Print(buf)
 
 	s.EqualError(err, "open /path/to/nothing/does-not-exist: no such file or directory")
 	s.Equal("", buf.String())
@@ -216,7 +213,6 @@ func (s *logsSuite) Test_Print_IndexTimeError() {
 		s.Require().NoError(os.RemoveAll(dir))
 	}()
 	s.createLogFile(dir, "bad.log", "some invalid log")
-	ctx := context.Background()
 	buf := &bytes.Buffer{}
 	cfg := LogsConfig{
 		Directory: dir,
@@ -227,7 +223,7 @@ func (s *logsSuite) Test_Print_IndexTimeError() {
 	}
 	s.Require().NoError(err)
 
-	err = logs.Print(ctx, buf)
+	err = logs.Print(buf)
 
 	s.EqualError(err, "line 'some invalid log': invalid log format")
 	s.Equal("", buf.String())

@@ -21,12 +21,12 @@ var errInvalidLogFormat = errors.New("invalid log format")
 
 // NewFile wraps an os.File creating a special apache common log format regex
 // and adding useful helper functions such as seekLine and search for easier working with log files
-func NewFile(file *os.File) *File {
+func NewFile(file *os.File) File {
 	logFormat := fmt.Sprintf(
 		`^(\S+) (\S+) (\S+) \[(?P<%s>[\w:/]+\s[+\-]\d{4})\] "(\S+)\s?(\S+)?\s?(\S+)?" (\d{3}|-) (\d+|-)\s?"?([^"]*)"?\s?"?([^"]*)?"?$`,
 		dateTimeGroupName,
 	)
-	return &File{
+	return File{
 		File:  file,
 		regEx: regexp.MustCompile(logFormat),
 	}
@@ -43,7 +43,7 @@ type File struct {
 // the offset of the log that is withing lookup time (that took place within the last T time).
 // offset >= 0 -> means an actual log line to begin reading logs at was found
 // offset == -1 -> all the logs inside the log file are older than the lookup time T
-func (file *File) IndexTime(lookupTime time.Time) (int64, error) {
+func (file File) IndexTime(lookupTime time.Time) (int64, error) {
 	var top, bottom, pos, prevPos, offset, prevOffset int64
 	scanLines := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		advance, token, err = bufio.ScanLines(data, atEOF)
@@ -132,7 +132,7 @@ func (file *File) IndexTime(lookupTime time.Time) (int64, error) {
 // seekLine resets the cursor for N lines relative to whence, back to the beginning (seek back)
 // lines: 0 ->  means seek back (till new line) for the current line
 // lines > 0 -> means seek back that many lines
-func (file *File) seekLine(lines int64, whence int) (int64, error) {
+func (file File) seekLine(lines int64, whence int) (int64, error) {
 	const bufferSize = 32 * 1024 // 32KB
 	buf := make([]byte, bufferSize)
 	bufLen := 0
@@ -202,7 +202,7 @@ func (file *File) seekLine(lines int64, whence int) (int64, error) {
 // parseLogTime parses a given apache common log line and attempts to convert it into time.Time
 // example of apache common log line:
 // 127.0.0.1 user-identifier frank [04/Mar/2022:05:30:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-func (file *File) parseLogTime(l string) (time.Time, error) {
+func (file File) parseLogTime(l string) (time.Time, error) {
 	matches := file.regEx.FindStringSubmatch(l)
 	if len(matches) == 0 {
 		return time.Time{}, fmt.Errorf("line '%s': %w", l, errInvalidLogFormat)
