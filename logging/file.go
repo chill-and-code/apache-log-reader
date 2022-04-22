@@ -34,6 +34,7 @@ func NewFile(file *os.File) File {
 	status := fmt.Sprintf(`(?P<%s>\d{3}|-)`, statusGroupName)
 	size := fmt.Sprintf(`(?P<%s>\d+|-)`, sizeGroupName)
 	logFormat := fmt.Sprintf(`^%s %s %s %s %s %s %s$`, ip, id, user, datetime, request, status, size)
+
 	return File{
 		File:  file,
 		regEx: regexp.MustCompile(logFormat),
@@ -52,40 +53,37 @@ type File struct {
 // offset >= 0 -> means an actual log line to begin reading logs at was found
 // offset == -1 -> all the logs inside the log file are older than the lookup time T
 func (file File) IndexTime(lookupTime time.Time) (int64, error) {
-	var top, bottom, pos, prevPos, offset, prevOffset int64
+	var pos, prevPos int64
 	scanLines := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		advance, token, err = bufio.ScanLines(data, atEOF)
-		prevPos = pos
-		pos += int64(advance)
+		prevPos, pos = pos, pos+int64(advance)
 		return
 	}
 
-	stat, err := os.Stat(file.Name())
+	stat, err := file.Stat()
 	if err != nil {
 		return -1, err
 	}
-	bottom = stat.Size()
+	top, bottom := int64(0), stat.Size()
 	var prevLogTime time.Time
 	for top <= bottom {
-		// define the middle relative to the top and bottom positions
 		middle := top + (bottom-top)/2
-		// seek the file at the middle
 		_, err := file.Seek(middle, io.SeekStart)
 		if err != nil {
 			return -1, err
 		}
+
 		// reposition the middle to the beginning of the current line
-		offset, err = file.seekLine()
+		offset, err := file.seekLine()
 		if err != nil {
 			return -1, err
 		}
 
-		// scan 1 line and parse 1 log line
 		scanner := bufio.NewScanner(file)
 		scanner.Split(scanLines)
 		scanner.Scan()
-		line := scanner.Text()
-		if strings.TrimSpace(line) == "" {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
 			// we'll consider empty line an EOF
 			break
 		}
@@ -122,22 +120,15 @@ func (file File) IndexTime(lookupTime time.Time) (int64, error) {
 			}
 			return bottom, nil
 		}
-		if top == bottom && top == stat.Size() {
-			return -1, nil
-		}
 
 		prevLogTime = logTime
-		prevOffset = offset
-	}
-
-	if lookupTime.Unix() == prevLogTime.Unix() {
-		return prevOffset, nil
 	}
 
 	return -1, nil
 }
 
-//seekLine sets back the file cursor to the beginning of the closest line
+// seekLine sets back the file cursor to the beginning of the closest line.
+// Note: this function also repositions the internal file cursor at the closest new line offset.
 func (file File) seekLine() (int64, error) {
 	// check if we're already at the beginning of the file (offset 0)
 	offset, err := file.Seek(0, io.SeekCurrent)
@@ -148,6 +139,7 @@ func (file File) seekLine() (int64, error) {
 		return file.Seek(0, io.SeekStart)
 	}
 
+	// traverse the file backwards till we reach a newline
 	for {
 		offset, err = file.Seek(-1, io.SeekCurrent)
 		if err != nil {

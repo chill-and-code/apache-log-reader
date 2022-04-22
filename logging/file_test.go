@@ -62,7 +62,8 @@ func (s *fileSuite) Test_IndexTime_Success() {
 127.0.0.1 user-identifier frank [07/Mar/2022:02:42:12 +0000] "GET /api/endpoint HTTP/1.0" 500 123
 127.0.0.1 user-identifier frank [07/Mar/2022:02:42:22 +0000] "GET /api/endpoint HTTP/1.0" 500 123
 127.0.0.1 user-identifier frank [07/Mar/2022:02:42:32 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [07/Mar/2022:02:42:42 +0000] "GET /api/endpoint HTTP/1.0" 500 123`
+127.0.0.1 user-identifier frank [07/Mar/2022:02:42:42 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+`
 	now, err := time.Parse(dateTimeFormat, "07/Mar/2022:02:43:00 +0000")
 	s.Require().NoError(err)
 	f := s.createLogs(logs)
