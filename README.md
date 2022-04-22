@@ -1,20 +1,20 @@
-# Weblog Analytics
+# Apache Log Reader
 
-Blazing fast log reader capable of working with giant log files (gigabytes) without too much spin.
+Blazing fast log reader capable of working with giant log files (gigabytes) without too much of a spin.
 Give it a try 🚀
 
-### Prerequisites
+## Prerequisites
 
 - Make sure you have installed Go version >= `1.17`
 
-### Build
+## Build
 
 ```shell
 # compiles and generates binaries for log-reader and log-generator inside the ./bin directory
 make build
 ``` 
 
-### Run
+## Run
 
 ```shell
 # run: "make build" first
@@ -34,7 +34,7 @@ go run cmd/log-generator/main.go -max-files=5 -max-lines=5 -min-lines=5
 ./bin/log-reader -d ./testdata -t 5
 ```
 
-### Test
+## Test
 
 ```shell
 # runs all the tests present in test files
@@ -44,9 +44,3 @@ go run cmd/log-generator/main.go -dir logging/bench
 # runs all the benchmarks present in test files
 make bench
 ```
-
-### TODOs
-
-- Better Error Handling & Logging
-- Cleaner API & smaller & more modular functions
-- More comments, especially on tricky logic functions

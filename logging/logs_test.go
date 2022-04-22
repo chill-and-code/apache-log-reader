@@ -21,7 +21,7 @@ func (s *logsSuite) SetupSuite() {
 	s.Require().NoError(os.RemoveAll(path.Dir(testDataDir)))
 	s.Require().NoError(os.MkdirAll(testDataDir, 0777))
 
-	// generate some logs and log files
+	// generate a few log files with some dummy logs for testing
 	t, err := time.Parse(dateTimeFormat, "03/Mar/2022:02:45:00 +0000")
 	s.Require().NoError(err)
 	s.testTime = t
