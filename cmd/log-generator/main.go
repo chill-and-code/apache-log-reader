@@ -14,7 +14,7 @@ const (
 	dateTimeFormat = "02/Jan/2006:15:04:05 -0700"
 )
 
-// The process should take ~5 minutes, for an Intel i9.
+// The process should take ~5 minutes, for an Intel i9 / 2m on M1 Max.
 // The results may vary depending on the CPU.
 func main() {
 	dirFlag := flag.String("dir", ".", "the directory to store all the testdata in")
@@ -48,11 +48,12 @@ func main() {
 	for i := 0; i < max; i++ {
 		select {
 		case <-ticker.C:
-			log.Println("iteration:", i, "generating logs, waiting...")
+			log.Printf("generating logs, iteration: [%d/%d] ...\n", i, max)
 		default:
 			timeRange = nowUTC.Add(-time.Duration(max-i) * interval)
 			logLine := fmt.Sprintf(
-				"127.0.0.1 user-identifier frank [%v] \"GET /api/endpoint HTTP/1.0\" 500 123\n",
+				"127.0.0.1 user-id-%d frank [%v] \"GET /api/endpoint HTTP/1.0\" 200 123\n",
+				i+1,
 				timeRange.Format(dateTimeFormat),
 			)
 

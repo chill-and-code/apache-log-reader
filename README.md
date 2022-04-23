@@ -51,5 +51,19 @@ make bench
 `M1 Max`
 
 ```text
-BenchmarkIndexTime-10               3312            361886 ns/op           84202 B/op        145 allocs/op
+goos: darwin
+goarch: arm64
+pkg: github.com/chill-and-code/apache-log-reader/logging
+BenchmarkIndexTime-10    	    3340	    369069 ns/op	   84364 B/op	     145 allocs/op
+PASS
+ok  	github.com/chill-and-code/apache-log-reader/logging	2.230s
+```
+
+`Intel i9`
+
+```text
+cpu: Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz
+BenchmarkIndexTime-16    	    1258	    800551 ns/op	   91046 B/op	     156 allocs/op
+PASS
+ok  	github.com/chill-and-code/apache-log-reader/logging	1.126s
 ```

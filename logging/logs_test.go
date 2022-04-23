@@ -29,9 +29,9 @@ func (s *logsSuite) SetupSuite() {
 	numOfFiles := 3
 	numOfLogs := 3
 	for i := 0; i < numOfFiles; i++ {
-		logs := fmt.Sprintf(`127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 500 123
+		logs := fmt.Sprintf(`127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [%v] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 			now.Add(-time.Duration(numOfFiles-i+4)*20*time.Second).Format(dateTimeFormat),
 			now.Add(-time.Duration(numOfFiles-i+3)*20*time.Second).Format(dateTimeFormat),
@@ -91,64 +91,64 @@ func (s *logsSuite) Test_Print_Success() {
 		{
 			name:         "Last Minute",
 			lastNMinutes: 1,
-			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 		},
 		{
 			name:         "Last Two Minutes",
 			lastNMinutes: 2,
-			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 		},
 		{
 			name:         "Last Three Minutes",
 			lastNMinutes: 3,
-			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 		},
 		{
 			name:         "Last Four Minutes",
 			lastNMinutes: 4,
-			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:41:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:41:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 		},
 		{
 			name:         "Last Five Hours",
 			lastNMinutes: 60 * 5,
-			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:41:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 500 123
-127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 500 123
+			expectedLogs: `127.0.0.1 user-identifier frank [03/Mar/2022:02:41:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:42:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:42:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:43:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:44:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:00 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:20 +0000] "GET /api/endpoint HTTP/1.0" 200 123
+127.0.0.1 user-identifier frank [03/Mar/2022:02:45:40 +0000] "GET /api/endpoint HTTP/1.0" 200 123
 `,
 		},
 	}

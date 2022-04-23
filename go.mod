@@ -1,4 +1,4 @@
-module github.com/steevehook/apache-log-reader
+module github.com/chill-and-code/apache-log-reader
 
 go 1.17
 

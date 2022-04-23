@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/steevehook/apache-log-reader/logging"
+	"github.com/chill-and-code/apache-log-reader/logging"
 )
 
 func main() {
