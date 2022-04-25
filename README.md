@@ -7,6 +7,11 @@ Give it a try 🚀
 
 - Make sure you have installed Go version >= `1.17`
 
+## Resources
+
+- [YouTube Video](https://youtube.com/c/SteveHook)
+- [Log Generator Archive](https://raw.githubusercontent.com/chill-and-code/apache-log-reader/master/archives/log-generator.tar.gz)
+
 ## Build
 
 ```shell
