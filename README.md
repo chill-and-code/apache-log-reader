@@ -21,6 +21,10 @@ make build
 
 ## Run
 
+Note: Keep in mind the `log-reader` binary will print logs using `UTC` time, instead of your local time!
+Also, the `log-generator` binary will generate logs in the future as well, for you to be able to test them
+before the log files modified time gets too old.
+
 ```shell
 # run: "make build" first
 # only run once to generate the test data, it may take a while (~5m)
@@ -45,6 +49,8 @@ go run cmd/log-generator/main.go -max-files=5 -max-lines=5 -min-lines=5
 ```shell
 # runs all the tests present in test files
 make test
+# generate testdata
+make testdata
 # generate the benchmark data
 make benchdata
 # runs all the benchmarks present in test files
