@@ -13,7 +13,7 @@ order to replicate the same results and test.
 
 ## Resources
 
-- [YouTube Video](https://youtube.com/c/SteveHook)
+- [YouTube Video](https://youtu.be/nxw3BYKzw7w)
 - [Log Generator Archive](https://raw.githubusercontent.com/chill-and-code/apache-log-reader/master/archives/log-generator.tar.gz)
 
 ## Build
