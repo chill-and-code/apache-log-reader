@@ -3,6 +3,10 @@
 Blazing fast log reader capable of working with giant log files (gigabytes) without too much of a spin.
 Give it a try 🚀
 
+**Note:** The program is built on the assumption that all logs are sorted by datetime (append mode) and log files are
+sorted by modified time (which falls under the first condition). Make sure to have these preconditions in
+order to replicate the same results and test.
+
 ## Prerequisites
 
 - Make sure you have installed Go version >= `1.17`
